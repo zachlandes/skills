@@ -19,7 +19,7 @@ Nothing moves on without your answer.
 
 ### What you need
 
-- A brief for the screen: what the product is, who uses it and when, what must be on screen, the device, and anything that cannot change. An existing screen to redesign also works. If something is missing, the agent asks.
+- A brief for the screen: what the product is, who uses it and when, what must be on screen, the device, and anything that cannot change. If you are redesigning a screen, the current one covers the layout, and the agent also asks what is wrong with it. The agent asks for anything that is missing.
 - A way for your agent to run the critic in a fresh context: a subagent, or a non-interactive call to a model from the command line. Use the strongest model you have for the critic. It can be the same model that builds; what makes it independent is that it sees nothing but the screenshots.
 - A way to take screenshots of the design, such as a browser your agent can drive.
 

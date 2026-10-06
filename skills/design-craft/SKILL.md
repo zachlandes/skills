@@ -24,8 +24,10 @@ It covers:
 - the structure, if it is already decided: the layout, the navigation, the information on each screen;
 - anything that cannot change: platform, framework, brand rules, a host app the design lives inside.
 
-An existing screen to redesign counts as a brief: its current structure is the structure unless the user says otherwise.
-If anything above is missing, ask for it in one message and wait.
+An existing screen to redesign answers the structure item, and its current structure stands unless the user says otherwise.
+It may show some of what cannot change, but it does not say who the screen is for, what job it does, or what is wrong with it now.
+So for a redesign, also ask why it is being redesigned: what is wrong with the current screen.
+Ask for everything above that is missing, and for a redesign the reason too, in one message, and wait.
 If the user has not worked out the journey or the structure yet, say so: a separate discovery step about the job and the layout is a better start than this process.
 
 Do not load any design-rules skill or style guide during a run.
