@@ -52,6 +52,44 @@ The random-seed technique builds on String Seed of Thought from Sakana AI.
 
 The stage gates, the research-derived variants, the optional check critic, the calibrated target for screens where a 9 is out of reach, and the file layout that keeps later stages hidden from earlier ones are additions in this adaptation.
 
+## jev-field-practice
+
+[Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) is TypeSafe's decision model: instead of writing text, it picks among options and says how sure it is.
+It's fast and cheap enough to put inside an app's control flow, but how well it decides depends heavily on how you ask.
+`jev-field-practice` is what I learned building with it: a message tagger, a router, and agents that fill in web forms.
+
+It covers how to word questions and options, what state to send and how to prepare it in code, when to offer a "none" option, many questions in one request against one at a time, confidence floors in multi-step workflows, testing on held-out data, and using Jev as a gate on a decision.
+Each heuristic says when it matters.
+My own measurements aren't published, so the skill gives their direction without numbers, and every number it does give comes from a public study listed in `sources.md`.
+
+### What you need
+
+- Access to Jev: a TypeSafe API key, or an [OpenRouter](https://openrouter.ai/typesafe/jev-1.13) or [Vercel AI Gateway](https://vercel.com/ai-gateway/models/jev) account. The skill has a dated note on both.
+- TypeSafe's docs at [docs.typesafe.ai](https://docs.typesafe.ai) or their [`typesafe-ai` skill](https://github.com/typesafe-ai/skills) for the API itself. This skill doesn't cover how to call Jev.
+
+### Install
+
+With the [skills CLI](https://github.com/vercel-labs/skills):
+
+```sh
+npx skills add zachlandes/skills --skill jev-field-practice
+```
+
+Or copy the `skills/jev-field-practice` folder into your agent's skills folder, for example `~/.claude/skills/` for Claude Code.
+
+### Use
+
+Your agent loads it when a task involves Jev, or you can ask for it by name:
+
+> Use jev-field-practice to review how this classifier asks Jev.
+
+> Our Jev router keeps picking the wrong rule for refactor tasks. What should we change?
+
+### Background
+
+The code and raw answers are in [trolley-bench](https://github.com/zachlandes/trolley-bench).
+The heuristics were written against `jev-1.13`, so check TypeSafe's model notes for anything a later version changed.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
