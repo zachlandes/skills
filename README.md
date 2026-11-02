@@ -90,6 +90,38 @@ Your agent loads it when a task involves Jev, or you can ask for it by name:
 The code and raw answers are in [trolley-bench](https://github.com/zachlandes/trolley-bench).
 The heuristics were written against `jev-1.13`, so check TypeSafe's model notes for anything a later version changed.
 
+## ai-tells
+
+Some sentence constructions show up far more often in AI text than in human text: a participial clause tacked on after a comma, a series of three, and so on.
+`ai-tells` checks a page or text for them with Jev, and only reports a construction as a tell if it passed a measured test.
+
+The check step splits any HTML, Markdown or plain text into sentences, asks Jev about each one, and lists the flagged sentences with their probabilities.
+It gives rates per 100 sentences and per 1,000 words beside the rates in human and AI text from calibration.
+The calibrate step tests a new candidate on 300 human and 300 AI corpus sentences and keeps it only if the AI-to-human ratio is 2x or more and precision on held-out hand labels is 0.8 or more, with the rule set before any label is written.
+Constructions that have not passed show up only as leads.
+
+### What you need
+
+- Python 3 and a way to call Jev: a TypeSafe key, or a Vercel AI Gateway key. Both steps cap spend in code; a check of a 400-sentence page costs about 2 cents.
+- For the calibrate step only: `pandas`, `pyarrow` and the [HAP-E-2 corpus](https://huggingface.co/datasets/browndw/human-ai-parallel-corpus-2).
+- The `jev-field-practice` skill is worth reading before you change a tell's wording.
+
+### Install
+
+```sh
+npx skills add zachlandes/skills --skill ai-tells
+```
+
+Or copy the `skills/ai-tells` folder into your agent's skills folder.
+
+### Use
+
+> Use ai-tells to check docs/overview.html.
+
+> Add "performed hedging" as a candidate tell and calibrate it.
+
+Every sentence you check is sent to TypeSafe, so check text you are free to share.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
