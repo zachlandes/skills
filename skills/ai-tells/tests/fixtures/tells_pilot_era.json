@@ -1,0 +1,480 @@
+{
+ "model": "jev-1.14.0",
+ "questions_revision": "q2",
+ "rule": {
+  "min_ratio": 2.0,
+  "min_heldout_precision": 0.8
+ },
+ "tells": {
+  "participial_clause": {
+   "status": "kept",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Does `sentence` contain an -ing participial clause joined to its main clause by a comma, adding a result, manner, reason or second action?",
+     "what_counts": "An -ing verb phrase with no subject of its own and no word like 'by', 'while', 'after' or 'when' before it, set off by a comma, before or after the main clause. 'Having' plus a past participle counts.",
+     "not": "NOT an -ing word used as a noun or adjective ('testing is slow', 'a running total'), NOT a progressive verb ('is running'), NOT an -ing phrase right after a noun with no comma ('agents running on servers'), NOT an -ing phrase after a preposition or subordinator ('by testing', 'while running').",
+     "examples": {
+      "yes": "The server crashed overnight, leaving three teams without a build.",
+      "no": "Testing every change by hand takes about an hour."
+     }
+    },
+    "criteria": {
+     "true": "The sentence has a comma-attached -ing participial clause.",
+     "false": "No comma-attached -ing participial clause."
+    }
+   },
+   "t_hi": 0.5,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "opus55-rerun",
+    "ai_source": "claude-opus-5-5",
+    "ratio": 1.59,
+    "ratio_ci": [
+     0.82,
+     3.09
+    ],
+    "human_yes": 13,
+    "ai_yes": 21,
+    "n_per_side": 299,
+    "heldout_precision": 0.9,
+    "heldout_yes": 10,
+    "kept_by_rule": false
+   },
+   "baselines": [
+    {
+     "ai_source": "claude-haiku-4-5-20251001",
+     "human": {
+      "per100": 3.7,
+      "per1k": 1.55
+     },
+     "ai": {
+      "per100": 10.7,
+      "per1k": 4.4
+     },
+     "calibration": "scr194-pilot"
+    }
+   ]
+  },
+  "corrective_framing": {
+   "status": "lead",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Does `sentence` use corrective framing: it names a possible view of something and denies or shrinks it in order to assert a replacement?",
+     "what_counts": "Forms such as 'not X but Y', 'not just X, but Y', 'X, not Y', 'rather than (simply) X', 'is more than (just) a X', 'isn't about X; it's about Y', 'less X than Y', where X is a framing, label or expectation about what something is or is about.",
+     "not": "NOT a plain negation with no replacement ('the test did not pass'), NOT a literal choice between two concrete options or actions ('we took the train rather than the bus'), NOT a comparison of amounts ('not more than five'). NOT an additive 'not only X but also Y' or 'both X and Y' where X stays true and Y is simply added to it (a list of two true things).",
+     "examples": {
+      "yes": "This is not a tooling problem; it is a trust problem.",
+      "no": "We took the train rather than the bus because the roads were closed."
+     }
+    },
+    "criteria": {
+     "true": "The sentence denies or shrinks one framing to assert another.",
+     "false": "No corrective framing: no view is denied or shrunk to make room for another."
+    }
+   },
+   "t_hi": 0.9,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "opus55-rerun",
+    "ai_source": "claude-opus-5-5",
+    "ratio": 1.29,
+    "ratio_ci": [
+     0.32,
+     5.15
+    ],
+    "human_yes": 3,
+    "ai_yes": 4,
+    "n_per_side": 299,
+    "heldout_precision": 0.67,
+    "heldout_yes": 3,
+    "kept_by_rule": false
+   },
+   "baselines": []
+  },
+  "importance_flag": {
+   "status": "lead",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Does `sentence` explicitly announce that something matters, is important, or deserves attention, as a statement about importance itself?",
+     "what_counts": "Phrases such as 'this matters', 'why X matters', 'here is why this is important', 'the key point is', 'crucially,', 'importantly,', 'it is worth noting', 'it's important to remember', 'this is significant because'.",
+     "not": "NOT a report of a specific person's or group's priorities as a fact ('the board ranked safety first'), NOT 'matter' or 'significant' in a literal or technical sense ('the matter went to court', 'a significant difference, p < 0.05'), NOT a hedge such as 'arguably'. NOT 'important', 'significant', 'key' or 'major' used as an ordinary adjective inside a noun phrase ('an important gap', 'a key finding', 'significant growth'); only a statement whose own point is that something matters.",
+     "examples": {
+      "yes": "This matters because every later step trusts the result.",
+      "no": "The committee met twice to discuss the matter."
+     }
+    },
+    "criteria": {
+     "true": "The sentence announces importance or significance as its point.",
+     "false": "No announcement of importance."
+    }
+   },
+   "t_hi": 0.7,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "opus55-rerun",
+    "ai_source": "claude-opus-5-5",
+    "ratio": 0.71,
+    "ratio_ci": [
+     0.14,
+     3.59
+    ],
+    "human_yes": 3,
+    "ai_yes": 2,
+    "n_per_side": 299,
+    "heldout_precision": 1.0,
+    "heldout_yes": 2,
+    "kept_by_rule": false
+   },
+   "baselines": []
+  },
+  "signpost_opener": {
+   "status": "rejected",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Does `sentence` open with a stock signposting phrase that announces the sentence's role in an argument rather than adding content?",
+     "what_counts": "Openers such as 'In practice,', 'Looking ahead,', 'In short,', 'Put simply,', 'At its core,', 'Ultimately,', 'In other words,', 'The bottom line is', 'Here's the thing:', 'That said,', 'In essence,', 'At the end of the day,'.",
+     "not": "NOT an opener with real content such as a time, place, source or condition ('In 2019,', 'In the lab,', 'According to the report,', 'If the test fails,'), NOT a plain connective ('However,', 'Also,', 'Then,', 'For example,', 'First,').",
+     "examples": {
+      "yes": "In practice, most teams skip this step.",
+      "no": "In 2019, the team moved to a new office."
+     }
+    },
+    "criteria": {
+     "true": "The sentence begins with a stock signposting phrase.",
+     "false": "No stock signposting opener."
+    }
+   },
+   "t_hi": 0.5,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "opus55-rerun",
+    "ai_source": "claude-opus-5-5",
+    "ratio": 0.53,
+    "ratio_ci": [
+     0.17,
+     1.64
+    ],
+    "human_yes": 8,
+    "ai_yes": 4,
+    "n_per_side": 299,
+    "heldout_precision": 0.4,
+    "heldout_yes": 5,
+    "kept_by_rule": false
+   },
+   "baselines": [
+    {
+     "ai_source": "claude-haiku-4-5-20251001",
+     "human": {
+      "per100": 0.3,
+      "per1k": 0.14
+     },
+     "ai": {
+      "per100": 0.0,
+      "per1k": 0.0
+     },
+     "calibration": "scr194-pilot"
+    },
+    {
+     "calibration": "opus55-rerun",
+     "ai_source": "claude-opus-5-5",
+     "human": {
+      "per100": 2.7,
+      "per1k": 1.03
+     },
+     "ai": {
+      "per100": 1.3,
+      "per1k": 0.51
+     }
+    }
+   ]
+  },
+  "tricolon": {
+   "status": "kept",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Does `sentence` contain a series of exactly three parallel items (words, phrases or clauses) of the same grammatical kind?",
+     "what_counts": "Three coordinated items with or without a final 'and' or 'or', such as 'fast, cheap and reliable', 'it reads the diff, runs the tests and posts a comment', 'we plan, we build, we ship'.",
+     "not": "NOT a series of two or of four or more items, NOT three items that are not parallel, NOT a list of three names, numbers, dates or citations ('Ohio, Texas and Maine', '2019, 2020 and 2021').",
+     "examples": {
+      "yes": "The new process is faster, cheaper and easier to audit.",
+      "no": "We visited Ohio and Texas last spring."
+     }
+    },
+    "criteria": {
+     "true": "The sentence has a series of exactly three parallel items.",
+     "false": "No series of exactly three parallel items."
+    }
+   },
+   "t_hi": 0.7,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "opus55-rerun",
+    "ai_source": "claude-opus-5-5",
+    "ratio": 2.94,
+    "ratio_ci": [
+     1.69,
+     5.11
+    ],
+    "human_yes": 15,
+    "ai_yes": 45,
+    "n_per_side": 299,
+    "heldout_precision": 0.8,
+    "heldout_yes": 10,
+    "kept_by_rule": true
+   },
+   "baselines": [
+    {
+     "ai_source": "claude-haiku-4-5-20251001",
+     "human": {
+      "per100": 4.7,
+      "per1k": 1.97
+     },
+     "ai": {
+      "per100": 11.3,
+      "per1k": 4.68
+     },
+     "calibration": "scr194-pilot"
+    }
+   ]
+  },
+  "subject_clause_passive": {
+   "status": "lead",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Is the subject of the main verb in `sentence` a whole clause, and is that main verb in the passive voice?",
+     "what_counts": "A what-, whether-, how-, who- or that-clause, or an -ing or to-infinitive clause, standing where a noun subject would, followed by a passive verb such as 'can be checked', 'was decided', 'is determined'.",
+     "not": "NOT a clause subject with an active or linking verb ('What the survey found surprised everyone', 'What matters is speed'), NOT a noun subject with a relative clause ('The team that built it was praised'), NOT a passive with an ordinary noun subject ('The results were confirmed').",
+     "examples": {
+      "yes": "Whether the patch works is decided by the nightly tests.",
+      "no": "What the survey found surprised everyone."
+     }
+    },
+    "criteria": {
+     "true": "A clause is the subject of a passive main verb.",
+     "false": "The main subject is not a clause, or the main verb is not passive."
+    }
+   },
+   "t_hi": 0.9,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "opus55-rerun",
+    "ai_source": "claude-opus-5-5",
+    "ratio": 1.0,
+    "ratio_ci": [
+     0.02,
+     50.24
+    ],
+    "human_yes": 0,
+    "ai_yes": 0,
+    "n_per_side": 299,
+    "heldout_precision": null,
+    "heldout_yes": 0,
+    "kept_by_rule": false
+   },
+   "baselines": []
+  },
+  "that_relative_subject": {
+   "status": "rejected",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Does `sentence` contain a relative clause introduced by 'that' in which 'that' is the subject of the clause's verb?",
+     "what_counts": "A noun followed by 'that' plus a verb, where 'that' does the action or is the subject: 'the tool that runs the tests', 'a change that breaks the build'.",
+     "not": "NOT 'that' as the object of the relative clause ('the book that she wrote'), NOT 'that' starting a complement clause ('he said that it works'), NOT 'that' as a demonstrative ('that tool') or in 'so that'.",
+     "examples": {
+      "yes": "Teams want a check that runs before every merge.",
+      "no": "She said that the check runs before every merge."
+     }
+    },
+    "criteria": {
+     "true": "The sentence has a that-relative clause with 'that' as subject.",
+     "false": "No subject that-relative clause."
+    }
+   },
+   "t_hi": 0.5,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "scr194-pilot",
+    "questions_revision": "q1",
+    "ai_source": "claude-haiku-4-5-20251001",
+    "ratio": 1.98,
+    "ratio_ci": [
+     1.19,
+     3.28
+    ],
+    "human_yes": 20,
+    "ai_yes": 40,
+    "n_per_side": 300,
+    "heldout_precision": null,
+    "heldout_yes": null,
+    "kept_by_rule": false
+   }
+  },
+  "paired_words": {
+   "status": "rejected",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Does `sentence` join two single words of the same part of speech with 'and' or 'or'?",
+     "what_counts": "Two adjectives, two nouns, two verbs or two adverbs joined directly: 'safe and reliable', 'goals and objectives', 'quickly and easily', 'review and approve'.",
+     "not": "NOT coordination of whole clauses or longer phrases ('she left and he stayed', 'the old server and the new database'), NOT pairs of proper names or numbers ('Smith and Jones', 'two or three').",
+     "examples": {
+      "yes": "The tool is simple and reliable.",
+      "no": "The old server crashed and the new one took over."
+     }
+    },
+    "criteria": {
+     "true": "Two single same-type words are joined by 'and' or 'or'.",
+     "false": "No such word pair."
+    }
+   },
+   "t_hi": 0.5,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "scr194-pilot",
+    "questions_revision": "q1",
+    "ai_source": "claude-haiku-4-5-20251001",
+    "ratio": 1.56,
+    "ratio_ci": [
+     1.25,
+     1.94
+    ],
+    "human_yes": 85,
+    "ai_yes": 133,
+    "n_per_side": 300,
+    "heldout_precision": null,
+    "heldout_yes": null,
+    "kept_by_rule": false
+   }
+  },
+  "performed_hedging": {
+   "status": "rejected",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Does `sentence` contain a hedge or balancing marker that softens a claim without adding specific information?",
+     "what_counts": "Markers such as 'arguably', 'to some extent', 'in many ways', 'it could be argued', 'to be fair', 'in some sense', 'somewhat', 'perhaps' used to soften a general claim.",
+     "not": "NOT a hedge tied to a stated condition, figure or piece of evidence ('the build may fail if the cache is stale', 'probably about 10%'), NOT an announcement of importance ('it is worth noting'), NOT reported uncertainty of a named source ('the police said it may have been arson').",
+     "examples": {
+      "yes": "Arguably, the real problem lies elsewhere.",
+      "no": "The build may fail if the cache is stale."
+     }
+    },
+    "criteria": {
+     "true": "The sentence softens a claim with a hedge that adds no specific information.",
+     "false": "No such hedge."
+    }
+   },
+   "t_hi": 0.5,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "scr194-pilot",
+    "questions_revision": "q1",
+    "ai_source": "claude-haiku-4-5-20251001",
+    "ratio": 1.06,
+    "ratio_ci": [
+     0.54,
+     2.09
+    ],
+    "human_yes": 15,
+    "ai_yes": 16,
+    "n_per_side": 300,
+    "heldout_precision": null,
+    "heldout_yes": null,
+    "kept_by_rule": false
+   }
+  },
+  "reduced_relative": {
+   "status": "rejected",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Does `sentence` contain a reduced relative clause: a noun directly followed by an -ing or -ed verb phrase that describes it, with no 'that', 'which' or 'who' and no comma?",
+     "what_counts": "'agents running on shared servers', 'data collected by the team', 'a request sent at night'.",
+     "not": "NOT a progressive or passive main verb ('agents are running', 'data was collected'), NOT an -ing or -ed adjective before a noun ('running agents', 'collected data'), NOT a participial clause set off by a comma.",
+     "examples": {
+      "yes": "Most of the data collected by the team was never used.",
+      "no": "The team collected most of the data in May."
+     }
+    },
+    "criteria": {
+     "true": "A noun is directly followed by a describing -ing or -ed phrase.",
+     "false": "No reduced relative clause."
+    }
+   },
+   "t_hi": 0.5,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "scr194-pilot",
+    "questions_revision": "q1",
+    "ai_source": "claude-haiku-4-5-20251001",
+    "ratio": 0.97,
+    "ratio_ci": [
+     0.61,
+     1.54
+    ],
+    "human_yes": 32,
+    "ai_yes": 31,
+    "n_per_side": 300,
+    "heldout_precision": null,
+    "heldout_yes": null,
+    "kept_by_rule": false
+   }
+  },
+  "nominal_pileup": {
+   "status": "rejected",
+   "question": {
+    "type": "noul",
+    "instructions": {
+     "question": "Does `sentence` contain a noun phrase that stacks three or more nouns in a row, or chains two or more abstract nouns ending in -tion, -ment, -ness or -ity with 'of'?",
+     "what_counts": "'the release approval workflow owner', 'the implementation of the evaluation of performance', 'risk assessment framework development'.",
+     "not": "NOT a proper name or title ('New York Stock Exchange'), NOT an ordinary two-noun compound ('test suite', 'pull request'), NOT a single abstract noun ('the evaluation').",
+     "examples": {
+      "yes": "The project risk assessment framework was revised twice.",
+      "no": "The test suite runs on every pull request."
+     }
+    },
+    "criteria": {
+     "true": "The sentence has a stack of three or more nouns or a chain of abstract nouns with 'of'.",
+     "false": "No such noun pile-up."
+    }
+   },
+   "t_hi": 0.5,
+   "t_lo": 0.5,
+   "calibration": {
+    "id": "scr194-pilot",
+    "questions_revision": "q1",
+    "ai_source": "claude-haiku-4-5-20251001",
+    "ratio": 1.64,
+    "ratio_ci": [
+     1.13,
+     2.38
+    ],
+    "human_yes": 37,
+    "ai_yes": 61,
+    "n_per_side": 300,
+    "heldout_precision": null,
+    "heldout_yes": null,
+    "kept_by_rule": false
+   }
+  }
+ },
+ "calibrations": [
+  {
+   "id": "scr194-pilot",
+   "date": "2026-11-01",
+   "note": "Pilot: 300 human and 300 Claude Haiku 4.5 HAP-E-2 sentences; 40 labels per tell; kept participial_clause and tricolon."
+  },
+  {
+   "id": "opus55-rerun",
+   "date": "2026-11-02",
+   "note": "Rerun with 299 Opus 5.5 continuations of HAP-E-2 chunk_1 prompts as the AI control; q2 questions (corrective framing excludes additive not-only-but-also; importance flag excludes attributive uses). Only tricolon passed."
+  }
+ ]
+}
