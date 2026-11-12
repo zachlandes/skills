@@ -36,19 +36,33 @@ def split_sentences(block):
     return out
 
 
-def _units(blocks):
+def _units(blocks, positional=False):
     """blocks: (kind, text) pairs, kind 'p' or 'h'. Sentences under MIN_WORDS words are dropped."""
-    units = []
-    for kind, text in blocks:
+    units, paragraph, section, sentence = [], 0, 0, 0
+    for block in blocks:
+        kind, text = block[:2]
+        bold = block[2] if len(block) > 2 else False
         text = re.sub(r"\s+", " ", text).strip()
         if not text:
             continue
         if kind == "h":
-            units.append({"kind": "heading", "text": text})
+            section += 1
+            unit = {"kind": "heading", "text": text}
+            if positional:
+                unit.update(id=f"h{section}", section=section)
+            units.append(unit)
             continue
+        paragraph += 1
+        first = True
         for s in split_sentences(text):
             if len(s.split()) >= MIN_WORDS:
-                units.append({"kind": "sentence", "text": s})
+                sentence += 1
+                unit = {"kind": "sentence", "text": s}
+                if positional:
+                    unit.update(id=f"s{sentence:04d}", paragraph=f"p{paragraph}", section=section,
+                                list_item=kind == "li", bold_leadin=bold, first_in_block=first)
+                units.append(unit)
+                first = False
     return units
 
 
@@ -62,37 +76,60 @@ class _Html(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.blocks, self.buf, self.skip, self.kind = [], [], 0, "p"
+        self.in_li, self.bold, self.bold_prefix, self.prefix_done = 0, 0, "", False
 
     def flush(self):
         if self.buf:
-            self.blocks.append((self.kind, "".join(self.buf)))
-        self.buf, self.kind = [], "p"
+            lead = bool(self.bold_prefix.strip() and re.match(
+                r"^\s*[.:]", "".join(self.buf)[len(self.bold_prefix):])) or self.bold_prefix.rstrip().endswith((":", "."))
+            self.blocks.append((self.kind, "".join(self.buf), lead))
+        self.buf, self.kind = [], "li" if self.in_li else "p"
+        self.bold_prefix, self.prefix_done = "", False
 
     def handle_starttag(self, tag, attrs):
         if tag in _SKIP:
             self.skip += 1
+        elif self.skip:
+            return
+        elif tag in {"b", "strong"}:
+            self.bold += 1
         elif tag in _HEAD:
             self.flush(); self.kind = "h"
         elif tag in _BLOCK:
             self.flush()
+            if tag == "li":
+                self.in_li += 1
+            self.kind = "li" if self.in_li else "p"
 
     def handle_endtag(self, tag):
         if tag in _SKIP:
             self.skip = max(0, self.skip - 1)
+        elif self.skip:
+            return
+        elif tag in {"b", "strong"}:
+            self.bold = max(0, self.bold - 1)
         elif tag in _HEAD or tag in _BLOCK:
             self.flush()
+            if tag == "li":
+                self.in_li = max(0, self.in_li - 1)
+                self.kind = "li" if self.in_li else "p"
 
     def handle_data(self, data):
         if not self.skip:
+            if not self.prefix_done:
+                if self.bold:
+                    self.bold_prefix += data
+                elif data.strip():
+                    self.prefix_done = True
             self.buf.append(data)
 
 
-def from_html(text):
+def from_html(text, positional=False):
     p = _Html()
     p.feed(text)
     p.close()
     p.flush()
-    return _units(p.blocks)
+    return _units(p.blocks, positional)
 
 
 def _md_inline(s):
@@ -103,12 +140,16 @@ def _md_inline(s):
     return html.unescape(s)
 
 
-def from_markdown(text):
+def from_markdown(text, positional=False):
     blocks, para, fence = [], [], False
+    para_kind = "p"
 
     def flush():
         if para:
-            blocks.append(("p", " ".join(para)))
+            raw = " ".join(para)
+            bold = bool(re.match(r"^(?:\*\*.+?\*\*|__.+?__)(?:[.:]|(?<=\*\*)\s|(?<=__)\s)", raw)
+                        and re.match(r"^(?:\*\*[^*]+[.:]\*\*|__[^_]+[.:]__|\*\*[^*]+\*\*[.:]|__[^_]+__[.:])", raw))
+            blocks.append((para_kind, _md_inline(raw), bold))
         para.clear()
 
     for line in text.splitlines():
@@ -120,21 +161,20 @@ def from_markdown(text):
                 flush()
             continue
         if not s:
-            flush(); continue
+            flush(); para_kind = "p"; continue
         m = re.match(r"(#{1,6})\s+(.*)", s)
         if m:
             flush(); blocks.append(("h", _md_inline(m.group(2)).rstrip("# "))); continue
         s = re.sub(r"^(?:>\s*)+", "", s)
         li = re.match(r"(?:[-*+]|\d+[.)])\s+(.*)", s)
         if li:
-            flush(); s = li.group(1)
-            blocks.append(("p", _md_inline(s))); continue
-        para.append(_md_inline(s))
+            flush(); para_kind = "li"; para.append(li.group(1)); continue
+        para.append(s)
     flush()
-    return _units(blocks)
+    return _units(blocks, positional)
 
 
-def from_plain(text):
+def from_plain(text, positional=False):
     blocks = []
     for para in re.split(r"\n\s*\n", text):
         flat = re.sub(r"\s+", " ", para).strip()
@@ -143,7 +183,7 @@ def from_plain(text):
         # A short block with no closing punctuation is a title or heading, not a sentence
         short_title = len(flat.split()) <= 10 and not re.search(r"[.!?][\"'”’)]?$", flat)
         blocks.append(("h" if short_title else "p", flat))
-    return _units(blocks)
+    return _units(blocks, positional)
 
 
 def detect_format(text, path=None):
@@ -162,7 +202,7 @@ def detect_format(text, path=None):
     return "plain"
 
 
-def extract(text, fmt=None, path=None):
+def extract(text, fmt=None, path=None, positional=False):
     fmt = fmt or detect_format(text, path)
-    units = {"html": from_html, "markdown": from_markdown, "plain": from_plain}[fmt](text)
+    units = {"html": from_html, "markdown": from_markdown, "plain": from_plain}[fmt](text, positional=positional)
     return fmt, units

@@ -24,7 +24,8 @@ DEFAULT_TELLS = os.path.join(HERE, "..", "tells.json")
 
 
 def load_registry(path=None):
-    return json.load(open(path or DEFAULT_TELLS))
+    with open(path or DEFAULT_TELLS, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def select_tells(reg, names=None, leads=False):
@@ -110,6 +111,91 @@ def format_text(rep, headings=0, spent=None):
     return "\n".join(L)
 
 
+def check_with_profiles(a, reg, chosen, units, sentences, headings, fmt):
+    import statistics
+    import profile_features as pf
+    import profile_workflow as pw
+
+    if not a.banlist:
+        raise SystemExit("a promoted profile requires --banlist with the registered local vocabulary file")
+    positional = textsplit.extract(a._text, fmt, positional=True)[1]
+    jobs, work = [], []
+    for index, instrument in enumerate(reg["profiles"]):
+        measurement_hashes = {name: pf.file_hash(os.path.join(HERE, name)) for name in ("profile_features.py", "textsplit.py")}
+        if (instrument.get("measurement_sha256") != measurement_hashes or instrument["features_sha256"] != pf.digest(pf.definitions())
+            or instrument["questions_sha256"] != pf.digest(instrument["questions"])):
+            raise SystemExit("profile definitions changed; recalibrate before checking")
+        banlist = pf.load_banlist(a.banlist, instrument["banlist_sha256"])
+        for number, window in enumerate(pf.windows(positional), 1):
+            requests = pf.requests(window, instrument["questions"])
+            prefix = f"profile:{index}:window:{number}:"
+            jobs += [dict(req, id=prefix + req["id"]) for req in requests]
+            work.append((instrument, number, window, prefix, banlist))
+    # Reuse fixed-shape sentence answers for the unchanged single-tell section
+    reuse = {}
+    first_questions = reg["profiles"][0]["questions"]
+    for instrument, _, window, prefix, _ in work:
+        if instrument is not reg["profiles"][0]:
+            continue
+        for u in window:
+            if u["kind"] == "sentence":
+                reuse[(u["id"], u["text"])] = prefix + u["id"]
+    legacy_jobs = []
+    for s in sentences:
+        missing = {name: t["question"] for name, t in chosen.items()
+                   if name not in first_questions or t["question"] != first_questions[name] or (s["id"], s["text"]) not in reuse}
+        if missing:
+            legacy_jobs.append({"id": "legacy:" + s["id"], "state": {"sentence": s["text"]}, "questions": missing})
+    jobs += legacy_jobs
+    est = pw.estimate(jobs, a.provider)
+    print(f"{fmt}: {len(sentences)} sentences; {len(jobs)} profile/legacy requests; up to ${jev.usd(est):.4f} (cap ${a.cap_usd:.2f})", file=sys.stderr)
+    if a.dry_run:
+        return 0
+    if jev.usd(est) > a.cap_usd:
+        raise SystemExit("profile estimate exceeds cap; nothing sent")
+    endpoint = jev.endpoint_for(a.provider)
+    key = jev.read_key(a.provider, a.env_file, a.key_file)
+    ledger = jev.Ledger(None, a.cap_usd)
+    results = pw.send(jobs, key, ledger, endpoint, a.provider, a.workers)
+    answers = {r["id"]: r["answers"] for r in results if "answers" in r}
+    errors = [r for r in results if "error" in r]
+    legacy = {}
+    for s in sentences:
+        value = dict(answers.get(reuse.get((s["id"], s["text"])), {}))
+        value.update(answers.get("legacy:" + s["id"], {}))
+        if value:
+            legacy[s["id"]] = value
+    report = build_report(sentences, legacy, chosen)
+    report.update(profiles=[], errors=len(errors), spent_usd=round(ledger.spent, 4))
+    if not errors:
+        for instrument in reg["profiles"]:
+            window_reports = []
+            for entry, number, window, prefix, banlist in work:
+                if entry is not instrument:
+                    continue
+                local = {key[len(prefix):]: value for key, value in answers.items() if key.startswith(prefix)}
+                features = pf.measure(window, local, banlist)
+                explanation = pw.explain(features, instrument)
+                explanation["window"] = number
+                window_reports.append(explanation)
+            score = statistics.median(r["score"] for r in window_reports)
+            report["profiles"].append({"id": instrument["id"], "score": score, "windows": window_reports,
+                                       "length_extrapolated": len(window_reports) > 1,
+                                       "flagged": score >= instrument["model"]["flag_line"]})
+    print(format_text(report, headings, ledger.spent))
+    for profile in report["profiles"]:
+        for window in profile["windows"]:
+            print(pw.format_explanation(window))
+        if profile["length_extrapolated"]:
+            print(f"  Median window score {profile['score']:+.4f}; long-page aggregation is untested beyond corpus lengths")
+    if errors:
+        print("PROFILE unavailable: incomplete answers; no profile verdict", file=sys.stderr)
+    if a.json:
+        with open(a.json, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=1, ensure_ascii=False)
+    return 1 if errors else 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("input")
@@ -120,17 +206,25 @@ def main(argv=None):
     ap.add_argument("--provider", default="typesafe", choices=list(jev.PROVIDERS))
     ap.add_argument("--env-file"); ap.add_argument("--key-file")
     ap.add_argument("--tells-file")
+    ap.add_argument("--banlist", help="local F23 list; required only for promoted profiles")
     ap.add_argument("--json")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
 
-    text = sys.stdin.read() if a.input == "-" else open(a.input, encoding="utf-8").read()
+    if a.input == "-":
+        text = sys.stdin.read()
+    else:
+        with open(a.input, encoding="utf-8") as f:
+            text = f.read()
     fmt, units = textsplit.extract(text, a.format, None if a.input == "-" else a.input)
     sentences = [{"id": f"s{n:04d}", "text": u["text"]} for n, u in enumerate((u for u in units if u["kind"] == "sentence"), 1)]
     headings = sum(1 for u in units if u["kind"] == "heading")
     reg = load_registry(a.tells_file)
     chosen = select_tells(reg, a.tells.split(",") if a.tells else None, a.leads)
+    if reg.get("profiles"):
+        a._text = text
+        return check_with_profiles(a, reg, chosen, units, sentences, headings, fmt)
     if not chosen:
         raise SystemExit("no tells to ask")
     questions = {n: t["question"] for n, t in chosen.items()}

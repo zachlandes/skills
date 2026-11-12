@@ -27,7 +27,9 @@ class Mock:
                 body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
                 mock.requests.append(body)
                 mock.auth.append(self.headers.get("Authorization"))
-                ans = {k: {"type": "noul", "noul": mock.yes_if(k, body["state"]["sentence"])} for k in body["questions"]}
+                state = body["state"]
+                text = state.get("sentence", state.get("last_sentence", state.get("last_paragraph", "")))
+                ans = {k: {"type": "noul", "noul": mock.yes_if(k, text)} for k in body["questions"]}
                 out = json.dumps({"answers": ans, "model": mock.model_override or body["model"],
                                   "usage": {"input_tokens": len(json.dumps(body)) // 4}}).encode()
                 self.send_response(200)
@@ -37,10 +39,26 @@ class Mock:
 
         self.server = HTTPServer(("127.0.0.1", 0), H)
         self.url = f"http://127.0.0.1:{self.server.server_port}"
-        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
 
     def close(self):
         self.server.shutdown()
+        self.server.server_close()
+        self.thread.join()
+
+
+@pytest.fixture(autouse=True)
+def loopback_network_only(monkeypatch):
+    import urllib.request
+    from urllib.parse import urlparse
+    real = urllib.request.urlopen
+
+    def local_only(request, *args, **kwargs):
+        url = request.full_url if hasattr(request, "full_url") else request
+        assert urlparse(url).hostname == "127.0.0.1", "tests must not contact a paid or public endpoint"
+        return real(request, *args, **kwargs)
+    monkeypatch.setattr(urllib.request, "urlopen", local_only)
 
 
 @pytest.fixture

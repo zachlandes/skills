@@ -89,7 +89,10 @@ class Ledger:
 
     def __init__(self, path, cap_usd):
         self.path, self.cap, self.reserved, self.lock = path, cap_usd, 0, threading.Lock()
-        self.data = json.load(open(path)) if path and os.path.exists(path) else {"tokens": 0, "requests": 0}
+        self.data = {"tokens": 0, "requests": 0}
+        if path and os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                self.data = json.load(f)
 
     def reserve(self, est):
         with self.lock:
@@ -103,7 +106,8 @@ class Ledger:
             self.data["tokens"] += actual if actual is not None else est
             self.data["requests"] += 1
             if self.path:
-                json.dump(self.data, open(self.path, "w"))
+                with open(self.path, "w", encoding="utf-8") as f:
+                    json.dump(self.data, f)
 
     @property
     def spent(self):
