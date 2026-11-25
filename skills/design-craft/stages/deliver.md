@@ -24,7 +24,8 @@ Stripped back to its content, standard controls and tighter type, it looked far 
 These patterns are fine on their own; they become tells because they show up everywhere.
 This is not a ban list: be deliberate about each one, keep the instances that earn their place, and let the user choose.
 
-The article names four, each with a better default; paraphrased:
+The first four patterns come from the article; the last four are adapted from [google-gemini/demolab, commit `cd0c1f8`](https://github.com/google-gemini/demolab/tree/cd0c1f8540c0186ec9592af972a0700fa20909d4) (Apache-2.0).
+The additions are paraphrased, with alternatives to try per instance:
 
 | Overused pattern | Try instead |
 | --- | --- |
@@ -32,6 +33,10 @@ The article names four, each with a better default; paraphrased:
 | Generic background gradients | A real background image, a pattern, or a plain solid colour |
 | Too many cards and containers | A flatter layout, such as a grid or tiles |
 | Too many fonts, text styles and type levels | "Start with 1-2 fonts and 2-4 styles until you need more", and keep accent colours and italics rare |
+| Decorative chips, badges and tags in any shape, above headings, on images or inside cards | Plain type hierarchy; reserve borders and capsule shapes for controls and real status |
+| Fake live furniture: decorative LIVE dots, SCROLL cues and rotated edge text | Remove the decoration; show live state only when it reflects real activity |
+| Button walls: a ghost button beside every primary action, or separate buttons for mode choices | One primary action per section; segmented controls, tabs or radios for mode choices |
+| Idle or slow motion: bobbing loops, ease-in and `transition: all` | An action-triggered response: 140-240 ms ease-out on `transform` and `opacity` |
 
 For each pattern, in order:
 

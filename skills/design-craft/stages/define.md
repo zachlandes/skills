@@ -54,10 +54,14 @@ Never buy the last point by departing from the host's patterns.
 
 ## Each round
 
-1. **Screenshot** the design at the same device, viewport and state as every other round, and copy it over `subject.png` in the blind directory. For several states, use the same set every round.
-2. **Call the critic**, and the check critic if you have one, as `critics.md` describes, with the same frozen prompt.
-3. **Record** every score, rank and critique in full under the round's heading in the log.
-4. **Apply the stop rule** below. If it says continue, act on the chosen critique as it was written, with nothing added and nothing removed except points dropped for native conformity.
+1. **Sweep for defects** before every round's screenshot, including round 0.
+   At the target device width, fix horizontal overflow, clipped words and overlapping text, ensure no text on the first screen is smaller than 13px, and honour reduced-motion preferences.
+2. **Screenshot** the design at the same device, viewport and state as every other round, and copy it over `subject.png` in the blind directory. For several states, use the same set every round.
+3. **Call the critic**, and the check critic if you have one, as `critics.md` describes, with the same frozen prompt.
+4. **Record** every score, rank and critique in full under the round's heading in the log.
+5. **Apply the stop rule** below. If it says continue, act on the chosen critique as it was written, with nothing added and nothing removed except points dropped for native conformity.
+
+The defect sweep is adapted from [google-gemini/demolab, commit `cd0c1f8`](https://github.com/google-gemini/demolab/tree/cd0c1f8540c0186ec9592af972a0700fa20909d4) (Apache-2.0).
 
 ## The stop rule
 
